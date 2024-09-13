@@ -9,6 +9,8 @@ namespace InventorySystem.Inventory.Extensions
 
     public sealed class InventoryItemSlotEvent : UnityEvent<InventoryItem, SlotBase> { }
 
+    public sealed class InventoryAddedToSlotEvent : UnityEvent<int, InventoryItem> { }
+
     public sealed class InventoryItemSlotToSlotEvent : UnityEvent<SlotBase, SlotBase> { }
 
     public sealed class InventoryItemMergeEvent : UnityEvent<InventoryItem, InventoryItem> { }
@@ -20,6 +22,8 @@ namespace InventorySystem.Inventory.Extensions
         public static InventoryItemEvent OnItemAdded = new();
         public static InventoryItemEvent OnItemRemoved = new();
         public static InventoryItemEvent OnItemStacked = new();
+
+        public static InventoryAddedToSlotEvent OnItemAddedToSlotWithIndex = new();
 
         public static InventoryItemSlotEvent OnItemAddedToSlot = new();
         public static InventoryItemSlotEvent OnItemRemovedFromSlot = new();

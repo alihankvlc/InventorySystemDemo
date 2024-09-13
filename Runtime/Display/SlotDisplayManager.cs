@@ -13,7 +13,7 @@ namespace InventorySystem.Display
         [SerializeField] private GameObject _displayBehaviourPrefab;
         [SerializeField, InlineEditor] private List<SlotDisplayBehaviour> _behaviours = new(); //TODO: public to private
 
-        private void Start()
+        private void Awake()
         {
             InventoryNotifier.OnItemStacked.AddListener(OnItemStacked);
             InventoryNotifier.OnItemAddedToSlot.AddListener(OnItemAdded);

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Linq;
+using InventorySystem.Factories;
 using InventorySystem.Interfaces;
 using InventorySystem.Inventory.Core;
 using InventorySystem.Inventory.Extensions;
@@ -10,29 +12,65 @@ namespace InventorySystem.Operators
     {
         public void AddItem(Inventory.Core.Inventory inventory, InventoryItem item, int quantity)
         {
-            if (inventory.TryFindStackableItem(item.Data.ID, out InventoryItem existingItem))
+            while (quantity > 0)
             {
-                existingItem.AddQuantity(quantity);
-                InventoryNotifier.OnItemStacked?.Invoke(existingItem);
-                return;
-            }
+                InventoryItem existingStackableItem = inventory.QueryHandler.FindExistingStackableItem(item.Data.ID);
+                int maxStackSize = (item.Data as IStackable).MaxStackSize;
 
-            inventory.TryAddToInventory(item);
-            InventoryNotifier.OnItemAdded?.Invoke(item);
+                if (existingStackableItem != null)
+                {
+                    int addQuantity = Mathf.Min(quantity, maxStackSize - existingStackableItem.Quantity);
+                    existingStackableItem.AddQuantity(addQuantity);
+                    InventoryNotifier.OnItemStacked?.Invoke(existingStackableItem);
+
+                    quantity -= addQuantity;
+                }
+
+                if (quantity > 0)
+                {
+                    int newStackQuantity = Mathf.Min(quantity, maxStackSize);
+                    InventoryItem newItem = InventoryItemFactory.CreateItem(item.Data, newStackQuantity);
+                    inventory.QueryHandler.TryAddToInventory(newItem, false);
+                    InventoryNotifier.OnItemAdded?.Invoke(newItem);
+
+                    quantity -= newStackQuantity;
+                }
+            }
         }
 
-        public void RemoveItem(Inventory.Core.Inventory inventory, InventoryItem item, int quantity, Action callback = null)
+        public void RemoveItem(Inventory.Core.Inventory inventory, InventoryItem item, int quantity)
         {
-            if (item != null)
+            while (quantity > 0)
             {
-                item.RemoveQuantity(quantity);
-                InventoryNotifier.OnItemStacked?.Invoke(item);
-            
+                InventoryItem existingStackableItem =
+                    inventory.QueryHandler.FindItemByDataId(item.Data, reverseOrder: true);
+
+                if (existingStackableItem == null)
+                    return;
+
+                int removeQuantity = Mathf.Min(quantity, existingStackableItem.Quantity);
+
+                existingStackableItem.RemoveQuantity(removeQuantity);
+                InventoryNotifier.OnItemStacked?.Invoke(existingStackableItem);
+
+                if (existingStackableItem.Quantity <= 0)
+                    inventory.QueryHandler.TryRemoveFromInventory(existingStackableItem, triggerEvent: true);
+
+                quantity -= removeQuantity;
+            }
+        }
+
+        public void HandleRemoveItemById(Inventory.Core.Inventory inventory, InventoryItem item, int quantity)
+        {
+            if (item == null) return;
+
+            item.RemoveQuantity(quantity);
+            InventoryNotifier.OnItemStacked?.Invoke(item);
+
+            if (item.Quantity <= 0)
+            {
                 if (item.Quantity <= 0)
-                {
-                    callback?.Invoke();
-                    InventoryNotifier.OnItemRemoved?.Invoke(item);
-                }
+                    inventory.QueryHandler.TryRemoveFromInventory(item, triggerEvent: true);
             }
         }
     }

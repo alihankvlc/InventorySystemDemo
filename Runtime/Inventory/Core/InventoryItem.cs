@@ -11,8 +11,8 @@
             Quantity = quantity;
             Id = id;
         }
-        public void AddQuantity(int quantity) => Quantity += quantity;
+        public void AddQuantity(int quantity = 1) => Quantity += quantity;
+        public void RemoveQuantity(int quantity = 1) => Quantity -= quantity;
         public void SetQuantity(int quantity) => Quantity = quantity;
-        public void RemoveQuantity(int quantity) => Quantity -= quantity;
     }
 }

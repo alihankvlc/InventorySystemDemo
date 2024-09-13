@@ -1,4 +1,5 @@
-﻿using InventorySystem.Display;
+﻿using System;
+using InventorySystem.Display;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -7,7 +8,7 @@ namespace InventorySystem.Controllers
     public sealed class DraggableSlotController : MonoBehaviour, IDragHandler, IBeginDragHandler, IEndDragHandler
     {
         private SlotDisplay _display;
-        [SerializeField] private Transform _parentAfterDrag; //TODO : Remove serialize field attribute
+        private Transform _parentAfterDrag;
 
         public Transform ParentAfterDrag => _parentAfterDrag;
 

@@ -12,7 +12,7 @@ namespace InventorySystem.Managment
     {
         [SerializeField, InlineEditor] private SlotBase[] _slots;
 
-        private void Start()
+        private void Awake()
         {
             for (var i = 0; i < _slots.Length; i++) _slots[i].SetIndex(i);
 

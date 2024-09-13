@@ -1,6 +1,7 @@
 ﻿using InventorySystem.Inventory.Core;
 using ItemSystem.Scripts.DataManager;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace InventorySystem.Operators.Base
 {

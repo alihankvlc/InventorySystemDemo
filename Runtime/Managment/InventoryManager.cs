@@ -13,16 +13,23 @@ namespace InventorySystem.Managment
         [SerializeField] private Inventory.Core.Inventory _inventory;
 
 #if UNITY_EDITOR
+
         #region TEST
+
         //TODO: REMOVE
         [SerializeField] private Potion _potion;
         [SerializeField] private Rifle _rifle;
 
-        [Button] private void AddPotion() => AddItem(_potion, 1);
-        [Button] private void RemovePotion(int id) => RemoveItem(id);
-        [Button] private void AddRifle() => AddItem(_rifle, 1);
+        [Button] private void AddPotion(int quantity = 1) => AddItem(_potion, quantity);
+        [Button] private void AddRifle(int quantity = 1) => AddItem(_rifle, quantity);
+
+        [Button] private void RemovePotion(int id, int quantity = 1) => RemoveItemByDataId(_potion.ID, quantity);
+
+        // [Button]
+        // private void RemoveRifle(int quantity = 1) => RemoveItemByDataId(_rifle.ID, quantity);
 
         #endregion
+
 #endif
         private void Awake()
         {
@@ -36,19 +43,19 @@ namespace InventorySystem.Managment
 
         public void AddItem(IItem item, int quantity)
         {
-            InventoryItem newItem = InventoryItemFactory.CreateItem(item, quantity);
-            _inventory.AddItem(newItem);
+            InventoryItem newItem = InventoryItemFactory.CreateItem(item, 1);
+            _inventory.AddItem(newItem, quantity);
         }
 
-        public void RemoveItem(int id, int quantity = 1)
+        public void HandleRemoveItemById(int id, int quantity = 1)
         {
-            InventoryItem existingItem = _inventory.GetInventoryItem(id);
+            _inventory.HandleRemoveItemById(id, quantity);
+        }
 
-            if (existingItem != null)
-            {
-                _inventory.RemoveItem(existingItem, quantity);
-                IDPool.ReleaseID(existingItem.Id);
-            }
+        public void RemoveItemByDataId(int id, int quantity = 1)
+        {
+            InventoryItem item = _inventory.QueryHandler.FindItemByDataId(id);
+            _inventory.RemoveItem(item, quantity);
         }
 
         private void OnItemsMerged(InventoryItem previousItem, InventoryItem targetItem)
@@ -68,7 +75,7 @@ namespace InventorySystem.Managment
             if (previousItem.Quantity <= 0)
             {
                 int removeID = previousItem.Id;
-                RemoveItem(removeID);
+                HandleRemoveItemById(removeID);
             }
         }
 
