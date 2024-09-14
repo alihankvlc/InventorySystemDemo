@@ -1,15 +1,22 @@
 ﻿using InventorySystem.Inventory.Core;
 using ItemSystem.Scripts.DataManager;
-using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine;
+
+public enum SlotType
+{
+    HotBar,
+    Inventory,
+}
 
 namespace InventorySystem.Operators.Base
 {
-    public sealed class SlotBase : MonoBehaviour
+    public abstract class SlotBase : MonoBehaviour
     {
         public InventoryItem Item;
         public bool IsOccupied { get; private set; }
         public int Index { get; private set; }
+        public virtual SlotType SlotType { get; protected set; }
 
         public void AddItemToSlot(InventoryItem item)
         {
@@ -29,7 +36,7 @@ namespace InventorySystem.Operators.Base
             Item = newItem;
         }
 
-        public void SetIndex(int index)
+        public void SetSlot(int index)
         {
             Index = index;
         }

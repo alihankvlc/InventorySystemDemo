@@ -42,11 +42,9 @@ namespace InventorySystem.Managment
         {
             _inventory = new(10);
             _window = new(_inventoryWindowContent);
-        }
 
-        private void Start()
-        {
             EventBus.Subscribe<ItemMergeEventData>(ItemsMerged);
+            EventBus.Subscribe<ItemUsageEventData>(ItemUsed);
         }
 
         private void Update()
@@ -69,6 +67,15 @@ namespace InventorySystem.Managment
         {
             InventoryItem item = _inventory.QueryHandler.FindItemByDataId(id);
             _inventory.RemoveItem(item, quantity);
+        }
+
+        public void ItemUsed(ItemUsageEventData eventData)
+        {
+            if (eventData._item.Data is IUseable useable)
+            {
+                useable.Use(1);
+                HandleRemoveItemById(eventData._item.Id);
+            }
         }
 
         private void HandleInput()
@@ -102,6 +109,7 @@ namespace InventorySystem.Managment
         private void OnDestroy()
         {
             EventBus.Unsubscribe<ItemMergeEventData>(ItemsMerged);
+            EventBus.Unsubscribe<ItemUsageEventData>(ItemUsed);
         }
     }
 }

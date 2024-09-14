@@ -12,7 +12,7 @@ namespace InventorySystem.Display
     public sealed class SlotDisplayManager : MonoBehaviour
     {
         [SerializeField] private GameObject _displayBehaviourPrefab;
-        
+
         private List<SlotDisplayBehaviour> _behaviours = new();
 
         private void Awake()
@@ -75,8 +75,12 @@ namespace InventorySystem.Display
             SlotDisplayBehaviour targetBehaviour = _behaviours.Find(r
                 => r.BehaviourID == eventData._toItem.Id);
 
-            targetBehaviour?.Display.SetQuantity
-                (eventData._fromItem.Quantity + eventData._toItem.Quantity);
+            int previousQuantity = previousBehaviour ? eventData._fromItem.Quantity : 0;
+            int targetQuantity = targetBehaviour ? eventData._toItem.Quantity : 0;
+            
+            int finalQuantity = previousQuantity + targetQuantity;
+
+            targetBehaviour?.Display.SetQuantity(finalQuantity);
         }
 
         private void ItemSwapped(ItemSwapEventData eventData)

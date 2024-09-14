@@ -15,7 +15,7 @@ namespace InventorySystem.Managment
 
         private void Awake()
         {
-            for (var i = 0; i < _slots.Length; i++) _slots[i].SetIndex(i);
+            for (var i = 0; i < _slots.Length; i++) _slots[i].SetSlot(i);
 
             EventBus.Subscribe<ItemAddedEventData>(ItemAdded);
             EventBus.Subscribe<ItemRemovedEventData>(ItemRemoved);
