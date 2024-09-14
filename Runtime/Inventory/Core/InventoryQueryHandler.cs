@@ -2,9 +2,10 @@
 using System.Linq;
 using InventorySystem.Inventory.Core;
 using InventorySystem.Inventory.Extensions;
+using InventorySystem.Utility;
 using UnityEngine;
 
-public sealed class InventoryQueryHandler : MonoBehaviour
+public sealed class InventoryQueryHandler
 {
     private readonly Inventory _inventory;
 
@@ -20,7 +21,7 @@ public sealed class InventoryQueryHandler : MonoBehaviour
         _inventory.Items.Add(inventoryItem);
 
         if (!triggerEvent) return true;
-        InventoryNotifier.OnItemAdded?.Invoke(inventoryItem);
+        EventBus.Publish(new ItemAddedEventData(inventoryItem));
         return true;
     }
 
@@ -29,7 +30,7 @@ public sealed class InventoryQueryHandler : MonoBehaviour
         if (_inventory.Items.Contains(inventoryItem))
         {
             _inventory.Items.Remove(inventoryItem);
-            InventoryNotifier.OnItemRemoved?.Invoke(inventoryItem);
+            EventBus.Publish(new ItemRemovedEventData(inventoryItem));
         }
 
         return false;

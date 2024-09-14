@@ -3,6 +3,7 @@ using InventorySystem.Display;
 using InventorySystem.Inventory.Core;
 using InventorySystem.Inventory.Extensions;
 using InventorySystem.Operators.Base;
+using InventorySystem.Utility;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
@@ -16,44 +17,45 @@ namespace InventorySystem.Managment
         {
             for (var i = 0; i < _slots.Length; i++) _slots[i].SetIndex(i);
 
-            InventoryNotifier.OnItemAdded.AddListener(OnItemAdded);
-            InventoryNotifier.OnItemRemoved.AddListener(OnItemRemoved);
-            InventoryNotifier.ItemMovedBetweenSlots.AddListener(OnItemMovedBetweenSlots);
-            InventoryNotifier.ItemsSwapped.AddListener(OnItemSwapped);
+            EventBus.Subscribe<ItemAddedEventData>(ItemAdded);
+            EventBus.Subscribe<ItemRemovedEventData>(ItemRemoved);
+            EventBus.Subscribe<ItemSlotToSlotEventData>(ItemMovedBetweenSlots);
+            EventBus.Subscribe<ItemSwapEventData>(ItemSwapped);
         }
 
-        public void OnItemAdded(InventoryItem item)
+        public void ItemAdded(ItemAddedEventData eventData)
         {
             SlotBase availableSlotBase = _slots.FirstOrDefault(r => !r.IsOccupied);
+
             if (availableSlotBase != null)
             {
-                availableSlotBase.AddItemToSlot(item);
-                InventoryNotifier.OnItemAddedToSlot?.Invoke(item, availableSlotBase);
+                availableSlotBase.AddItemToSlot(eventData._item);
+                EventBus.Publish(new ItemSlotEventData(eventData._item, availableSlotBase));
             }
         }
 
-        public void OnItemRemoved(InventoryItem item)
+        public void ItemRemoved(ItemRemovedEventData eventData)
         {
-            SlotBase availableSlotBase = _slots.FirstOrDefault(r => r.IsOccupied && r.Item.Id == item.Id);
+            SlotBase availableSlotBase = _slots.FirstOrDefault(r => r.IsOccupied && r.Item.Id == eventData._item.Id);
             if (availableSlotBase != null)
             {
                 availableSlotBase.RemoveItemFromSlot();
-                InventoryNotifier.OnItemRemovedFromSlot?.Invoke(item, availableSlotBase);
+                EventBus.Publish(new ItemRemovedFromSlotEventData(eventData._item, availableSlotBase));
             }
         }
 
-        private void OnItemMovedBetweenSlots(SlotBase previousSlot, SlotBase targetSlot)
+        private void ItemMovedBetweenSlots(ItemSlotToSlotEventData eventData)
         {
-            InventoryItem tempItem = previousSlot.Item;
+            InventoryItem tempItem = eventData._fromSlot.Item;
 
-            previousSlot.RemoveItemFromSlot();
-            targetSlot.AddItemToSlot(tempItem);
+            eventData._fromSlot.RemoveItemFromSlot();
+            eventData._toSlot.AddItemToSlot(tempItem);
         }
 
-        private void OnItemSwapped(SlotDisplayBehaviour droppedBehaviour, SlotDisplayBehaviour targetBehaviour)
+        private void ItemSwapped(ItemSwapEventData eventData)
         {
-            SlotBase currentSlot = droppedBehaviour.Slot;
-            SlotBase nextSlot = targetBehaviour.Slot;
+            SlotBase currentSlot = eventData._fromBehaviour.Slot;
+            SlotBase nextSlot = eventData._targetBehaviour.Slot;
 
             InventoryItem currentItem = currentSlot.Item;
             InventoryItem nextItem = nextSlot.Item;
@@ -61,13 +63,13 @@ namespace InventorySystem.Managment
             currentSlot.UpdateSlot(nextItem);
             nextSlot.UpdateSlot(currentItem);
         }
-        
+
         private void OnDestroy()
         {
-            InventoryNotifier.OnItemAdded.RemoveListener(OnItemAdded);
-            InventoryNotifier.OnItemRemoved.AddListener(OnItemRemoved);
-            InventoryNotifier.ItemMovedBetweenSlots.RemoveListener(OnItemMovedBetweenSlots);
-            InventoryNotifier.ItemsSwapped.RemoveListener(OnItemSwapped);
+            EventBus.Unsubscribe<ItemAddedEventData>(ItemAdded);
+            EventBus.Unsubscribe<ItemRemovedEventData>(ItemRemoved);
+            EventBus.Unsubscribe<ItemSlotToSlotEventData>(ItemMovedBetweenSlots);
+            EventBus.Unsubscribe<ItemSwapEventData>(ItemSwapped);
         }
     }
 }

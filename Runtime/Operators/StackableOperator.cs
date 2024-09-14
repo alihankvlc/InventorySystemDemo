@@ -4,6 +4,7 @@ using InventorySystem.Factories;
 using InventorySystem.Interfaces;
 using InventorySystem.Inventory.Core;
 using InventorySystem.Inventory.Extensions;
+using InventorySystem.Utility;
 using UnityEngine;
 
 namespace InventorySystem.Operators
@@ -21,7 +22,7 @@ namespace InventorySystem.Operators
                 {
                     int addQuantity = Mathf.Min(quantity, maxStackSize - existingStackableItem.Quantity);
                     existingStackableItem.AddQuantity(addQuantity);
-                    InventoryNotifier.OnItemStacked?.Invoke(existingStackableItem);
+                    EventBus.Publish(new ItemStackedEventData(existingStackableItem));
 
                     quantity -= addQuantity;
                 }
@@ -31,8 +32,7 @@ namespace InventorySystem.Operators
                     int newStackQuantity = Mathf.Min(quantity, maxStackSize);
                     InventoryItem newItem = InventoryItemFactory.CreateItem(item.Data, newStackQuantity);
                     inventory.QueryHandler.TryAddToInventory(newItem, false);
-                    InventoryNotifier.OnItemAdded?.Invoke(newItem);
-
+                    EventBus.Publish(new ItemAddedEventData(newItem));
                     quantity -= newStackQuantity;
                 }
             }
@@ -51,7 +51,7 @@ namespace InventorySystem.Operators
                 int removeQuantity = Mathf.Min(quantity, existingStackableItem.Quantity);
 
                 existingStackableItem.RemoveQuantity(removeQuantity);
-                InventoryNotifier.OnItemStacked?.Invoke(existingStackableItem);
+                EventBus.Publish(new ItemStackedEventData(existingStackableItem));
 
                 if (existingStackableItem.Quantity <= 0)
                     inventory.QueryHandler.TryRemoveFromInventory(existingStackableItem, triggerEvent: true);
@@ -65,7 +65,7 @@ namespace InventorySystem.Operators
             if (item == null) return;
 
             item.RemoveQuantity(quantity);
-            InventoryNotifier.OnItemStacked?.Invoke(item);
+            EventBus.Publish(new ItemStackedEventData(item));
 
             if (item.Quantity <= 0)
             {

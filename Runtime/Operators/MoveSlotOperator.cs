@@ -2,6 +2,7 @@
 using InventorySystem.Interfaces;
 using InventorySystem.Inventory.Extensions;
 using InventorySystem.Operators.Base;
+using InventorySystem.Utility;
 using UnityEngine;
 
 namespace InventorySystem.Operators
@@ -11,7 +12,7 @@ namespace InventorySystem.Operators
         public void Execute(SlotDisplayBehaviour droppedBehaviour, SlotBase targetSlot)
         {
             droppedBehaviour.SetDisplaySlot(targetSlot.transform);
-            InventoryNotifier.ItemMovedBetweenSlots?.Invoke(droppedBehaviour.Slot,targetSlot);
+            EventBus.Publish(new ItemSlotToSlotEventData(droppedBehaviour.Slot, targetSlot));
         }
     }
 }

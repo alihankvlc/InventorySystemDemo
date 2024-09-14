@@ -3,6 +3,7 @@ using System.Linq;
 using InventorySystem.Inventory.Core;
 using InventorySystem.Inventory.Extensions;
 using InventorySystem.Operators.Base;
+using InventorySystem.Utility;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
@@ -11,89 +12,90 @@ namespace InventorySystem.Display
     public sealed class SlotDisplayManager : MonoBehaviour
     {
         [SerializeField] private GameObject _displayBehaviourPrefab;
-        [SerializeField, InlineEditor] private List<SlotDisplayBehaviour> _behaviours = new(); //TODO: public to private
+        
+        private List<SlotDisplayBehaviour> _behaviours = new();
 
         private void Awake()
         {
-            InventoryNotifier.OnItemStacked.AddListener(OnItemStacked);
-            InventoryNotifier.OnItemAddedToSlot.AddListener(OnItemAdded);
-            InventoryNotifier.OnItemRemovedFromSlot.AddListener(OnItemRemoved);
-            InventoryNotifier.ItemMovedBetweenSlots.AddListener(OnItemMovedBetweenSlots);
-            InventoryNotifier.ItemsSwapped.AddListener(OnItemSwapped);
-            InventoryNotifier.ItemsMerged.AddListener(OnItemsMerged);
+            EventBus.Subscribe<ItemSlotEventData>(ItemAdded);
+            EventBus.Subscribe<ItemRemovedEventData>(ItemRemoved);
+            EventBus.Subscribe<ItemStackedEventData>(ItemStacked);
+            EventBus.Subscribe<ItemSwapEventData>(ItemSwapped);
+            EventBus.Subscribe<ItemSlotToSlotEventData>(ItemMovedBetweenSlots);
+            EventBus.Subscribe<ItemMergeEventData>(ItemsMerged);
         }
 
-        private void OnItemAdded(InventoryItem item, SlotBase slotBase)
+        private void ItemAdded(ItemSlotEventData eventData)
         {
             SlotDisplayBehaviour newBehaviour = Instantiate(_displayBehaviourPrefab,
-                slotBase.transform).GetComponent<SlotDisplayBehaviour>();
+                eventData._slot.transform).GetComponent<SlotDisplayBehaviour>();
 
 #if UNITY_EDITOR
-            newBehaviour.transform.name = $"{item.Data.Name}_Display";
+            newBehaviour.transform.name = $"{eventData._item.Data.Name}_Display";
 #endif
             if (newBehaviour != null)
             {
-                newBehaviour.InitializeBehaviour(slotBase);
+                newBehaviour.InitializeBehaviour(eventData._slot);
                 _behaviours.Add(newBehaviour);
             }
         }
 
-        private void OnItemRemoved(InventoryItem item, SlotBase slotBase)
+        private void ItemRemoved(ItemRemovedEventData eventData)
         {
-            SlotDisplayBehaviour behaviour = _behaviours.Find(r => r.BehaviourID == item.Id);
+            SlotDisplayBehaviour behaviour = _behaviours.Find(r => r.BehaviourID == eventData._item.Id);
 
             if (behaviour != null)
             {
                 _behaviours.Remove(behaviour);
                 Destroy(behaviour.gameObject);
-                
+
                 behaviour = null;
             }
         }
 
-        private void OnItemStacked(InventoryItem item)
+        private void ItemStacked(ItemStackedEventData eventData)
         {
             SlotDisplayBehaviour behaviour = _behaviours.Find
-                (r => r.BehaviourID == item.Id);
+                (r => r.BehaviourID == eventData._item.Id);
 
-            behaviour?.Display.SetQuantity(item.Quantity);
+            behaviour?.Display.SetQuantity(eventData._item.Quantity);
         }
 
-        private void OnItemMovedBetweenSlots(SlotBase previousSlot, SlotBase targetSlot)
+        private void ItemMovedBetweenSlots(ItemSlotToSlotEventData eventData)
         {
-            SlotDisplayBehaviour behaviour = _behaviours.Find(r => r.Slot == previousSlot);
-            behaviour.SetSlotBase(targetSlot);
+            SlotDisplayBehaviour behaviour = _behaviours.Find(r => r.Slot == eventData._fromSlot);
+            behaviour.SetSlotBase(eventData._toSlot);
         }
 
-        private void OnItemSwapped(SlotDisplayBehaviour droppedBehaviour, SlotDisplayBehaviour targetBehaviour)
-        {
-            SlotBase currentSlot = droppedBehaviour.Slot;
-            SlotBase nextSlot = targetBehaviour.Slot;
-
-            droppedBehaviour.SetSlotBase(nextSlot);
-            targetBehaviour.SetSlotBase(currentSlot);
-        }
-
-        private void OnItemsMerged(InventoryItem previousItem, InventoryItem targetItem)
+        private void ItemsMerged(ItemMergeEventData eventData)
         {
             SlotDisplayBehaviour previousBehaviour = _behaviours.Find(r
-                => r.BehaviourID == previousItem.Id);
+                => r.BehaviourID == eventData._fromItem.Id);
 
             SlotDisplayBehaviour targetBehaviour = _behaviours.Find(r
-                => r.BehaviourID == targetItem.Id);
+                => r.BehaviourID == eventData._toItem.Id);
 
-            previousBehaviour?.Display.SetQuantity(previousItem.Quantity);
-            targetBehaviour?.Display.SetQuantity(targetItem.Quantity);
+            targetBehaviour?.Display.SetQuantity
+                (eventData._fromItem.Quantity + eventData._toItem.Quantity);
+        }
+
+        private void ItemSwapped(ItemSwapEventData eventData)
+        {
+            SlotBase currentSlot = eventData._fromBehaviour.Slot;
+            SlotBase nextSlot = eventData._targetBehaviour.Slot;
+
+            eventData._fromBehaviour.SetSlotBase(nextSlot);
+            eventData._targetBehaviour.SetSlotBase(currentSlot);
         }
 
         private void OnDestroy()
         {
-            InventoryNotifier.OnItemStacked.RemoveListener(OnItemStacked);
-            InventoryNotifier.OnItemAddedToSlot.RemoveListener(OnItemAdded);
-            InventoryNotifier.OnItemRemovedFromSlot.RemoveListener(OnItemRemoved);
-            InventoryNotifier.ItemMovedBetweenSlots.RemoveListener(OnItemMovedBetweenSlots);
-            InventoryNotifier.ItemsSwapped.RemoveListener(OnItemSwapped);
-            InventoryNotifier.ItemsMerged.RemoveListener(OnItemsMerged);
+            EventBus.Unsubscribe<ItemSlotEventData>(ItemAdded);
+            EventBus.Unsubscribe<ItemRemovedEventData>(ItemRemoved);
+            EventBus.Unsubscribe<ItemStackedEventData>(ItemStacked);
+            EventBus.Unsubscribe<ItemSwapEventData>(ItemSwapped);
+            EventBus.Unsubscribe<ItemSlotToSlotEventData>(ItemMovedBetweenSlots);
+            EventBus.Unsubscribe<ItemMergeEventData>(ItemsMerged);
         }
     }
 }

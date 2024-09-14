@@ -2,6 +2,7 @@
 using InventorySystem.Interfaces;
 using InventorySystem.Inventory.Extensions;
 using InventorySystem.Operators.Base;
+using InventorySystem.Utility;
 using UnityEngine;
 
 namespace InventorySystem.Operators
@@ -21,7 +22,7 @@ namespace InventorySystem.Operators
 
             droppedBehaviour.SetDisplaySlot(targetSlot.transform);
 
-            InventoryNotifier.ItemsSwapped?.Invoke(droppedBehaviour, targetBehaviour);
+            EventBus.Publish(new ItemSwapEventData(droppedBehaviour, targetBehaviour));
         }
     }
 }

@@ -1,10 +1,11 @@
 ﻿namespace InventorySystem.Inventory.Core
 {
+    [System.Serializable]
     public sealed class InventoryItem
     {
         public IItem Data { get; private set; }
-        public int Quantity { get; private set; }
-        public int Id { get; private set; }
+        public int Quantity;
+        public int Id;
         public InventoryItem(IItem item, int quantity, int id)
         {
             Data = item;

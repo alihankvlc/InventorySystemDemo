@@ -1,4 +1,6 @@
-﻿using InventorySystem.Factories;
+﻿using System;
+using InventorySystem.Controllers;
+using InventorySystem.Factories;
 using InventorySystem.Inventory.Core;
 using InventorySystem.Inventory.Extensions;
 using InventorySystem.Utility;
@@ -11,6 +13,11 @@ namespace InventorySystem.Managment
     public sealed class InventoryManager : MonoBehaviour
     {
         [SerializeField] private Inventory.Core.Inventory _inventory;
+        [SerializeField] private KeyCode _windowToggleKey = KeyCode.I;
+        [SerializeField] private GameObject _inventoryWindowContent;
+
+        private const KeyCode ESCAPE_KEY = KeyCode.Escape;
+        private InventoryWindow _window;
 
 #if UNITY_EDITOR
 
@@ -34,11 +41,17 @@ namespace InventorySystem.Managment
         private void Awake()
         {
             _inventory = new(10);
+            _window = new(_inventoryWindowContent);
         }
 
         private void Start()
         {
-            InventoryNotifier.ItemsMerged.AddListener(OnItemsMerged);
+            EventBus.Subscribe<ItemMergeEventData>(ItemsMerged);
+        }
+
+        private void Update()
+        {
+            HandleInput();
         }
 
         public void AddItem(IItem item, int quantity)
@@ -58,30 +71,37 @@ namespace InventorySystem.Managment
             _inventory.RemoveItem(item, quantity);
         }
 
-        private void OnItemsMerged(InventoryItem previousItem, InventoryItem targetItem)
+        private void HandleInput()
         {
-            int maxStackSize = (previousItem.Data as IStackable).MaxStackSize;
+            if (Input.GetKeyDown(_windowToggleKey) ||
+                (_window.IsWindowOpen && Input.GetKeyDown(ESCAPE_KEY)))
+                _window.ToggleWindow();
+        }
 
-            int droppedQuantity = previousItem.Quantity;
-            int targetQuantity = targetItem.Quantity;
+        private void ItemsMerged(ItemMergeEventData eventData)
+        {
+            int maxStackSize = (eventData._fromItem.Data as IStackable).MaxStackSize;
+
+            int droppedQuantity = eventData._fromItem.Quantity;
+            int targetQuantity = eventData._toItem.Quantity;
 
             int totalQuantity = droppedQuantity + targetQuantity;
 
             if (totalQuantity > maxStackSize) return;
 
-            targetItem.AddQuantity(droppedQuantity);
-            previousItem.SetQuantity(0);
+            eventData._toItem.AddQuantity(droppedQuantity);
+            eventData._fromItem.SetQuantity(0);
 
-            if (previousItem.Quantity <= 0)
+            if (eventData._fromItem.Quantity <= 0)
             {
-                int removeID = previousItem.Id;
+                int removeID = eventData._fromItem.Id;
                 HandleRemoveItemById(removeID);
             }
         }
 
         private void OnDestroy()
         {
-            InventoryNotifier.ItemsMerged.RemoveListener(OnItemsMerged);
+            EventBus.Unsubscribe<ItemMergeEventData>(ItemsMerged);
         }
     }
 }

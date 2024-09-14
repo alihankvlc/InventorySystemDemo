@@ -9,9 +9,10 @@ using UnityEngine;
 
 namespace InventorySystem.Inventory.Core
 {
+    [System.Serializable]
     public sealed class Inventory
     {
-        private readonly List<InventoryItem> _items;
+        [SerializeField] private List<InventoryItem> _items;
 
         private readonly Dictionary<System.Type, IInventoryOperator> _operators;
         private readonly InventoryQueryHandler _queryHandler;
@@ -70,7 +71,7 @@ namespace InventorySystem.Inventory.Core
         private void ProccesHandleRemoveItemById(IInventoryOperator @operator, InventoryItem item, int quantity)
         {
             @operator.HandleRemoveItemById(this, item, quantity);
-        }//TODO: DENEME
+        }
 
         private IInventoryOperator GetInventoryOperator(IItem item)
         {
