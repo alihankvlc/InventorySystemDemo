@@ -9,10 +9,9 @@ using UnityEngine;
 
 namespace InventorySystem.Inventory.Core
 {
-    [System.Serializable]
     public sealed class Inventory
     {
-        [SerializeField] private List<InventoryItem> _items;
+     private readonly List<InventoryItem> _items;
 
         private readonly Dictionary<System.Type, IInventoryOperator> _operators;
         private readonly InventoryQueryHandler _queryHandler;

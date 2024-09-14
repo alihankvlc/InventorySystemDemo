@@ -12,10 +12,11 @@ namespace InventorySystem.Managment
 {
     public sealed class InventoryManager : MonoBehaviour
     {
-        [SerializeField] private Inventory.Core.Inventory _inventory;
         [SerializeField] private KeyCode _windowToggleKey = KeyCode.I;
         [SerializeField] private GameObject _inventoryWindowContent;
 
+        private Inventory.Core.Inventory _inventory;
+        
         private const KeyCode ESCAPE_KEY = KeyCode.Escape;
         private InventoryWindow _window;
 
